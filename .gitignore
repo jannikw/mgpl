@@ -2,10 +2,10 @@
 tmp
 bin
 target
-generated
-generated-sources
+#generated
+#generated-sources
 #src-gen
 #xtend-gen
-model
+#model
 *.xml_gen
 !test/src-gen
