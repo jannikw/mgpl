@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: de.tu_dortmund.mgpl
+Bundle-ManifestVersion: 2
+Bundle-Name: de.tu_dortmund.mgpl
+Bundle-Vendor: My Company
+Bundle-Version: 1.0.0.qualifier
+Bundle-SymbolicName: de.tu_dortmund.mgpl; singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.xtext,
+ org.eclipse.xtext.xbase,
+ org.eclipse.equinox.common;bundle-version="3.5.0",
+ org.eclipse.emf.ecore,
+ org.eclipse.xtext.xbase.lib;bundle-version="2.14.0",
+ org.eclipse.xtext.util,
+ org.eclipse.emf.common,
+ org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: de.tu_dortmund.validation,
+ de.tu_dortmund,
+ de.tu_dortmund.generator,
+ de.tu_dortmund.services,
+ de.tu_dortmund.parser.antlr.internal,
+ de.tu_dortmund.scoping,
+ de.tu_dortmund.mGPL,
+ de.tu_dortmund.mGPL.util,
+ de.tu_dortmund.parser.antlr,
+ de.tu_dortmund.serializer,
+ de.tu_dortmund.mGPL.impl
+Import-Package: org.apache.log4j

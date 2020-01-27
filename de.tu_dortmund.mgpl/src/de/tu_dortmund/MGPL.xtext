@@ -1,0 +1,146 @@
+grammar de.tu_dortmund.MGPL with org.eclipse.xtext.common.Terminals
+
+generate mGPL "http://www.tu_dortmund.de/MGPL"
+
+Program:
+	'game' name=IDF 
+	'(' attributes=AttrAssList? ')' 
+	declarations+=Decl* 
+	init=StmtBlock 
+	blocks+=Block*
+	;
+
+ReferenceTarget:
+	Program | Decl | AnimBlock | AnimTarget
+	;
+
+Decl:
+	(ObjDecl | ObjArrayDecl | VarDecl) ';'
+	;
+
+VarDecl:
+	ScalarVarDecl | ArrayVarDecl
+	;
+	
+ScalarVarDecl:
+	'int' name=IDF ('=' initialization=Expr)?
+	;
+	
+ArrayVarDecl:
+	'int' name=IDF '[' size=INT ']'
+	;
+	
+ObjDecl:
+	type=ObjType name=IDF '(' attributes=AttrAssList? ')'
+	;
+	
+ObjArrayDecl:
+	type=ObjType name=IDF '[' size=INT ']'
+	;
+
+enum ObjType:	
+	RECTANGLE='rectangle' | TRIANGLE='triangle' | CIRCLE='circle'
+	;
+
+AttrAssList:
+	assignments+=AttrAss (',' assignments+=AttrAss)*
+	;
+
+AttrAss:
+	attributeName=IDF '=' value=Expr
+	;
+
+Block:
+	AnimBlock | EventBlock
+	;
+
+AnimBlock:
+	'animation' name=IDF '(' target=AnimTarget ')' action=StmtBlock
+	;
+	
+AnimTarget:
+	type=ObjType name=IDF
+	;
+
+EventBlock:
+	'on' key=KeyStroke action=StmtBlock
+	;
+
+enum KeyStroke:
+	SPACE='space' | LEFT_ARROW='leftarrow' | RIGHT_ARROW='rightarrow' | UP_ARROW='uparrow' | DOWN_ARROW='downarrow'
+	;
+
+StmtBlock:
+	'{' {StmtBlock} statements+=Stmt* '}'
+	;
+	
+Stmt: IfStmt | ForStmt | AssStmt;
+
+IfStmt:
+	'if' '(' condition=Expr ')' then=StmtBlock (=> 'else' else=StmtBlock)?
+	;
+
+ForStmt:
+	'for' '(' init=Assignment ';' condition=Expr ';' step=Assignment ')' body=StmtBlock
+	;
+	
+Assignment
+	: var=Var '=' value=Expr
+	;
+
+AssStmt:
+	Assignment ';'
+	;
+
+Var:
+	variable=[ReferenceTarget|IDF] |
+	variable=[ReferenceTarget|IDF] =>'[' index=Expr ']' ('.' attribute=IDF)? |
+	variable=[ReferenceTarget|IDF] =>'.' attribute=IDF
+	;
+	
+Expr
+	:	OrExpr
+	;
+	
+OrExpr returns Expr:
+	BoolExpr ({BinaryExpr.left=current} op='||' right=BoolExpr)*
+	;
+	
+BoolExpr returns Expr:
+	RelExpr ({BinaryExpr.left=current} op='&&' right=RelExpr)*
+	;
+	
+RelExpr returns Expr:
+	AddExpr ({BinaryExpr.left=current} op=('=='|'<'|'<=') right=AddExpr)*
+	;
+	
+AddExpr returns Expr:
+	MulExpr ({BinaryExpr.left=current} op=('+' | '-') right=MulExpr)*
+	;
+	
+MulExpr returns Expr:
+	SimpleExpr ({BinaryExpr.left=current} op=('*' | '/') right=SimpleExpr)*
+	;
+	
+SimpleExpr returns Expr
+	:	UnaryExpr
+	|	NumberExpr
+	| 	VarExpr ({TouchExpr.toucher=current} 'touches' touchee=VarExpr)?
+	| 	'(' Expr ')'
+	;
+UnaryExpr:
+	op=('-' | '!') operand=SimpleExpr
+	;
+	
+NumberExpr:
+	number=INT
+	;
+
+VarExpr:
+	var=Var
+;
+	
+terminal IDF
+	: ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
+   	;
+   	
