@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="game" 
+	style="border:1px solid #000000;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<script type="text/javascript" src="https://unpkg.com/sat@0.8.0/SAT.js""></script>
+<script>
+	var canvas = document.getElementById("game");
+	
+	// Program attributes
+	var __Pong = {
+		...{x: 0, y: 0, w: 100, h: 100, s: 50},
+		w: 400,
+		h: 300,
+		s: 95,
+	};
+	
+	// Set the game dimensions
+	canvas.width = __Pong.w;
+	canvas.height = __Pong.h
+	
+	// Calculate frame time based on speed attribute
+	var _FRAME_TIME = 230 - 2 * __Pong.s;
+	
+	// Default object attributes
+	var _DEFAULTS = {
+		circle: {type: "circle", a: null, r: 20, v: 1, x: 0, y: 0},
+		rectangle: {type: "rectangle", a: null, h: 20, w: 20, v: 1, x: 0, y: 0},
+		triangle: {type: "triangle", a: null, h: 20, w: 20, v: 1, x: 0, y: 0},
+	};
+	
+	// All object that will be animated and rendered
+	var _OBJECTS = [];
+	
+	// Declarations
+	var __paddle_increment = 10;
+	var __ball_x_increment = 5;
+	var __ball_y_increment = 2;
+	var __paddle_width = 5;
+	var __paddle_height = 40;
+	var __ball_size = 10;
+	var __paddle = {
+		..._DEFAULTS.rectangle,
+		x: ((__Pong.w / 10) | 0),
+		y: ((__Pong.h / 2) | 0),
+		w: __paddle_width,
+		h: __paddle_height,
+	};
+	_OBJECTS.push(__paddle);
+	var __ball = {
+		..._DEFAULTS.circle,
+		x: ((__Pong.w / 2) | 0),
+		y: ((__Pong.h / 2) | 0),
+		r: ((__ball_size / 2) | 0),
+		a: __ball_animate,
+	};
+	_OBJECTS.push(__ball);
+	
+	// Initialization block
+	
+	function __ball_animate(__cur_ball) {
+		if (((((((__cur_ball.x < 0) | 0) && ((__ball_x_increment < 0) | 0)) | 0) || ((((((__Pong.w - __ball_size) | 0) < __cur_ball.x) | 0) && ((0 < __ball_x_increment) | 0)) | 0)) | 0)) {
+			__ball_x_increment = (-(__ball_x_increment) | 0)
+		}
+		if (((((__cur_ball.y < 0) | 0) || ((((__Pong.h - __ball_size) | 0) < __cur_ball.y) | 0)) | 0)) {
+			__ball_y_increment = (-(__ball_y_increment) | 0)
+		}
+		if ((touches(__cur_ball, __paddle) | 0)) {
+			__ball_x_increment = (-(__ball_x_increment) | 0)
+		}
+		__cur_ball.x = ((__cur_ball.x + __ball_x_increment) | 0)
+		__cur_ball.y = ((__cur_ball.y + __ball_y_increment) | 0)
+	}
+	
+	// on downarrow
+	document.addEventListener("keydown", (event) => {
+		if (event.key == "ArrowDown") {
+			if (((__paddle.y < ((__Pong.h - ((2 * __paddle_increment) | 0)) | 0)) | 0)) {
+				__paddle.y = ((__paddle.y + __paddle_increment) | 0)
+			}
+		}
+	});
+	
+	// on uparrow
+	document.addEventListener("keydown", (event) => {
+		if (event.key == "ArrowUp") {
+			if (((__paddle_increment < __paddle.y) | 0)) {
+				__paddle.y = ((__paddle.y - __paddle_increment) | 0)
+			}
+		}
+	});
+	
+	
+	window.setInterval(canvas => {
+		// Trigger animations of each object
+		_OBJECTS.forEach(o => {
+			if (o.a) {
+				o.a(o);	
+			}	
+		});
+		
+		// Clear previous frame
+		const context = canvas.getContext('2d');
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		
+		_OBJECTS.forEach(o => {
+			// Skip rendering when object is invisible
+			if (o.v == 0) {
+				return;
+			}
+			
+			// Render based on the type of object
+			if (o.type === "circle") {
+				context.beginPath();
+				context.arc(o.x, o.y, o.r, 0, 2 * Math.PI, false);
+				context.fillStyle = "#000000";
+				context.fill();
+			} else if (o.type === "rectangle") {
+				context.fillStyle = "#000000";
+				context.fillRect(o.x, o.y, o.w, o.h);
+			} else if (o.type === "triangle") {
+				context.beginPath();
+				context.moveTo(o.x, o.y);
+				context.lineTo(o.x + o.w, o.y);
+				context.lineTo(o.x + o.w / 2, o.y + o.h);
+				context.closePath();
+				
+				context.fillStyle = "#000000";
+				context.fill();
+			}
+		});
+	}, _FRAME_TIME, canvas);
+	
+	// Touches calculation using http://jriecken.github.io/sat-js/
+	function touches(a, b) {
+		var V = SAT.Vector;
+		var C = SAT.Circle;
+		var P = SAT.Polygon;
+		
+		function transform(x) {
+			if (x.type === "circle") {
+				return new C(new V(x.x, x.y), x.r);
+			} else if (x.type === "rectangle") {
+				return new P(new V(x.x, x.y), [new V(0,0), new V(x.w, 0), new V(x.w, x.h), new V(0, x.h)]);	
+			} else if (x.type == "triangle") {
+				return new P(new V(x.x, x.y), [new V(0,0), new V(x.w, 0), new V(x.w/2, x.h)]);	
+			}
+		}
+		
+		var at = transform(a);
+		var bt = transform(b);
+		var test = a.type[0] + b.type[0];
+		
+		if (test === "cc") {
+			return SAT.testCircleCircle(at, bt);
+		}
+		if (test === "rc" || test === "tc") {
+			return SAT.testPolygonCircle(at, bt);
+		}
+		if (test === "cr" || test === "ct") {
+			return SAT.testPolygonCircle(bt, at);
+		}
+		if (test === "rr" || test === "tr" || test === "rt" || test === "tt") {
+			return SAT.testPolygonPolygon(at, bt);
+		}
+	}
+</script>
+</body>
+</html>

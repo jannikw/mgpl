@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="game" 
+	style="border:1px solid #000000;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<script type="text/javascript" src="https://unpkg.com/sat@0.8.0/SAT.js""></script>
+<script>
+	var canvas = document.getElementById("game");
+	
+	// Program attributes
+	var __Invaders = {
+		...{x: 0, y: 0, w: 100, h: 100, s: 50},
+		w: 500,
+		h: 500,
+		x: 300,
+		y: 200,
+		s: 100,
+	};
+	
+	// Set the game dimensions
+	canvas.width = __Invaders.w;
+	canvas.height = __Invaders.h
+	
+	// Calculate frame time based on speed attribute
+	var _FRAME_TIME = 230 - 2 * __Invaders.s;
+	
+	// Default object attributes
+	var _DEFAULTS = {
+		circle: {type: "circle", a: null, r: 20, v: 1, x: 0, y: 0},
+		rectangle: {type: "rectangle", a: null, h: 20, w: 20, v: 1, x: 0, y: 0},
+		triangle: {type: "triangle", a: null, h: 20, w: 20, v: 1, x: 0, y: 0},
+	};
+	
+	// All object that will be animated and rendered
+	var _OBJECTS = [];
+	
+	// Declarations
+	var __alien_increment = 6;
+	var __alien_y_increment = 0;
+	var __bullet_increment = 17;
+	var __counter = 0;
+	var __i = 0;
+	var __aliens = new Array(10);
+	for (var i = 0; i < 10; i++) {
+		__aliens[i] = { ..._DEFAULTS.circle };
+		_OBJECTS.push(__aliens[i]);
+	}
+	var __bullets = new Array(5);
+	for (var i = 0; i < 5; i++) {
+		__bullets[i] = { ..._DEFAULTS.rectangle };
+		_OBJECTS.push(__bullets[i]);
+	}
+	var __gun = {
+		..._DEFAULTS.triangle,
+		x: 250,
+		y: 50,
+		w: 25,
+		h: 12,
+	};
+	_OBJECTS.push(__gun);
+	
+	// Initialization block
+	for (
+		__i = 0;
+		((__i < 5) | 0);
+		__i = ((__i + 1) | 0)
+	) {
+		__bullets[__i].w = 2
+		__bullets[__i].h = 20
+		__bullets[__i].v = 0
+		__bullets[__i].a = __bullet_animate
+	}
+	for (
+		__i = 0;
+		((__i < 10) | 0);
+		__i = ((__i + 1) | 0)
+	) {
+		__aliens[__i].r = 4
+		__aliens[__i].a = __alien_animate
+	}
+	__aliens[0].a = __lead_alien_animate
+	__aliens[0].x = 250
+	__aliens[0].y = 300
+	__aliens[1].x = 230
+	__aliens[1].y = 320
+	__aliens[2].x = 270
+	__aliens[2].y = 320
+	__aliens[3].x = 210
+	__aliens[3].y = 340
+	__aliens[4].x = 250
+	__aliens[4].y = 340
+	__aliens[5].x = 290
+	__aliens[5].y = 340
+	__aliens[6].x = 190
+	__aliens[6].y = 360
+	__aliens[7].x = 230
+	__aliens[7].y = 360
+	__aliens[8].x = 270
+	__aliens[8].y = 360
+	__aliens[9].x = 310
+	__aliens[9].y = 360
+	
+	function __lead_alien_animate(__lead_alien) {
+		if (((((((__Invaders.w - 100) | 0) < ((__lead_alien.x + __alien_increment) | 0)) | 0) || ((((__lead_alien.x + __alien_increment) | 0) < 100) | 0)) | 0)) {
+			__alien_increment = (-(__alien_increment) | 0)
+		}
+		if (((2 <= __counter) | 0)) {
+			__alien_y_increment = (-(1) | 0)
+			__counter = 0
+		} else {
+			__counter = ((__counter + 1) | 0)
+			__alien_y_increment = 0
+		}
+		__lead_alien.x = ((__lead_alien.x + __alien_increment) | 0)
+		__lead_alien.y = ((__lead_alien.y + __alien_y_increment) | 0)
+	}
+	
+	function __alien_animate(__alien) {
+		__alien.x = ((__alien.x + __alien_increment) | 0)
+		__alien.y = ((__alien.y + __alien_y_increment) | 0)
+	}
+	
+	function __bullet_animate(__cur_bullet) {
+		if (__cur_bullet.v) {
+			for (
+				__i = 0;
+				((__i < 10) | 0);
+				__i = ((__i + 1) | 0)
+			) {
+				if (((__aliens[__i].v && (touches(__cur_bullet, __aliens[__i]) | 0)) | 0)) {
+					__aliens[__i].v = 0
+					__cur_bullet.v = 0
+				}
+			}
+			__cur_bullet.y = ((__cur_bullet.y + __bullet_increment) | 0)
+			if (((__Invaders.h < __cur_bullet.y) | 0)) {
+				__cur_bullet.v = 0
+			}
+		}
+	}
+	
+	// on leftarrow
+	document.addEventListener("keydown", (event) => {
+		if (event.key == "ArrowLeft") {
+			if (((50 < __gun.x) | 0)) {
+				__gun.x = ((__gun.x - 5) | 0)
+			}
+		}
+	});
+	
+	// on rightarrow
+	document.addEventListener("keydown", (event) => {
+		if (event.key == "ArrowRight") {
+			if (((__gun.x < ((__Invaders.w - 50) | 0)) | 0)) {
+				__gun.x = ((__gun.x + 5) | 0)
+			}
+		}
+	});
+	
+	// on space
+	document.addEventListener("keydown", (event) => {
+		if (event.key == " ") {
+			for (
+				__i = 0;
+				((__i < 5) | 0);
+				__i = ((__i + 1) | 0)
+			) {
+				if ((!(__bullets[__i].v) | 0)) {
+					__bullets[__i].v = 1
+					__bullets[__i].x = ((__gun.x + ((__gun.w / 2) | 0)) | 0)
+					__bullets[__i].y = ((__gun.y + __gun.h) | 0)
+					__i = 6
+				}
+			}
+		}
+	});
+	
+	
+	window.setInterval(canvas => {
+		// Trigger animations of each object
+		_OBJECTS.forEach(o => {
+			if (o.a) {
+				o.a(o);	
+			}	
+		});
+		
+		// Clear previous frame
+		const context = canvas.getContext('2d');
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		
+		_OBJECTS.forEach(o => {
+			// Skip rendering when object is invisible
+			if (o.v == 0) {
+				return;
+			}
+			
+			// Render based on the type of object
+			if (o.type === "circle") {
+				context.beginPath();
+				context.arc(o.x, o.y, o.r, 0, 2 * Math.PI, false);
+				context.fillStyle = "#000000";
+				context.fill();
+			} else if (o.type === "rectangle") {
+				context.fillStyle = "#000000";
+				context.fillRect(o.x, o.y, o.w, o.h);
+			} else if (o.type === "triangle") {
+				context.beginPath();
+				context.moveTo(o.x, o.y);
+				context.lineTo(o.x + o.w, o.y);
+				context.lineTo(o.x + o.w / 2, o.y + o.h);
+				context.closePath();
+				
+				context.fillStyle = "#000000";
+				context.fill();
+			}
+		});
+	}, _FRAME_TIME, canvas);
+	
+	// Touches calculation using http://jriecken.github.io/sat-js/
+	function touches(a, b) {
+		var V = SAT.Vector;
+		var C = SAT.Circle;
+		var P = SAT.Polygon;
+		
+		function transform(x) {
+			if (x.type === "circle") {
+				return new C(new V(x.x, x.y), x.r);
+			} else if (x.type === "rectangle") {
+				return new P(new V(x.x, x.y), [new V(0,0), new V(x.w, 0), new V(x.w, x.h), new V(0, x.h)]);	
+			} else if (x.type == "triangle") {
+				return new P(new V(x.x, x.y), [new V(0,0), new V(x.w, 0), new V(x.w/2, x.h)]);	
+			}
+		}
+		
+		var at = transform(a);
+		var bt = transform(b);
+		var test = a.type[0] + b.type[0];
+		
+		if (test === "cc") {
+			return SAT.testCircleCircle(at, bt);
+		}
+		if (test === "rc" || test === "tc") {
+			return SAT.testPolygonCircle(at, bt);
+		}
+		if (test === "cr" || test === "ct") {
+			return SAT.testPolygonCircle(bt, at);
+		}
+		if (test === "rr" || test === "tr" || test === "rt" || test === "tt") {
+			return SAT.testPolygonPolygon(at, bt);
+		}
+	}
+</script>
+</body>
+</html>
